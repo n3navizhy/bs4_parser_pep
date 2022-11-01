@@ -54,7 +54,7 @@ def latest_versions(session):
         else:
             raise Exception('Ничего не нашлось')
 
-    results= [('Ссылка на статью', 'Заголовок', 'Редактор, автор')]
+    results = [('Ссылка на статью', 'Заголовок', 'Редактор, автор')]
     pattern = r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
 
     for a_tag in a_tags:
@@ -78,19 +78,19 @@ def download(session):
     response = get_response(session, d_url)
     if response is None:
         return
-    soup = BeautifulSoup(response.text,'lxml')
+    soup = BeautifulSoup(response.text, 'lxml')
 
-    table = soup.find('table',class_ ='docutils')
+    table = soup.find('table', class_='docutils')
 
-    pdf = table.find('a', {'href':re.compile(r'.+pdf-a4\.zip$')})
+    pdf = table.find('a', {'href': re.compile(r'.+pdf-a4\.zip$')})
     link = urljoin(d_url, pdf['href'])
-    file_name =  link.split('/')[-1]
+    file_name = link.split('/')[-1]
     downloadDIR.mkdir(exist_ok=True)
     archive_path = downloadDIR/file_name
 
     response = session.get(link)
 
-    with open(archive_path,'wb') as file:
+    with open(archive_path, 'wb') as file:
         file.write(response.content)
     print(archive_path)
     logging.info(f'Архив был загружен и сохранён: {archive_path}')
@@ -98,7 +98,6 @@ def download(session):
 
 def pep(session):
     pep_list = []
-    pep_res =[]
     EXPECTED_STATUS = {
         'A': ('Active', 'Accepted'),
         'D': ('Deferred',),
@@ -137,7 +136,8 @@ def pep(session):
                 if t is not None:
                     t_status = t.text[1:]
                 if pep.find('a', class_='pep reference internal') is not None:
-                    link = pep.find('a', class_='pep reference internal')['href']
+                    link = pep.find('a', class_='pep reference internal')
+                    link = link['href']
                     ab_link = 'https://peps.python.org/'+link
                     response = session.get(ab_link)
                     soup = BeautifulSoup(response.text, 'lxml')
@@ -163,6 +163,7 @@ def pep(session):
 
     logging.info(f'Файл с результатами был сохранён: {file_path}')
 
+
 MODE_TO_FUNCTION = {
     'whats-new': whats_new,
     'latest-versions': latest_versions,
@@ -184,5 +185,7 @@ def main():
     if results is not None:
         control_output(results, args)
     logging.info('Парсер завершил работу.')
+
+    
 if __name__ == '__main__':
     main()
