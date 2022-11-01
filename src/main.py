@@ -10,6 +10,7 @@ from configs import configure_argument_parser ,configure_logging
 from outputs import control_output
 import csv
 
+
 def whats_new(session):
     wn_url = urljoin(MAIN_DOC_URL,'whatsnew/')
 
@@ -27,14 +28,12 @@ def whats_new(session):
         version_link = urljoin(wn_url,res['href'])
         response = get_response(session, version_link)
         if response is None:
-        # Если основная страница не загрузится, программа закончит работу.
             return
         soup = BeautifulSoup(response.text,'lxml')
         h1 = soup.find('h1').text
         d1 = soup.find('dl')
-        d1_text = d1.text.replace('\n', ' ')
+        d1_text = d1.text.replace('\n',' ')
         results.append((res['href'],h1,d1_text))
-
     return results
 
 def latest_versions(session):
@@ -43,9 +42,7 @@ def latest_versions(session):
     if response is None:
     # Если основная страница не загрузится, программа закончит работу.
         return
-
-    soup = BeautifulSoup(response.text, 'lxml')
-
+    soup = BeautifulSoup(response.text,'lxml')
     sidebar = soup.find('div',class_='sphinxsidebar')
 
     ui_tags = sidebar.find_all('ul')
@@ -59,7 +56,7 @@ def latest_versions(session):
             raise Exception('Ничего не нашлось')
 
 
-    results=[('Ссылка на статью', 'Заголовок', 'Редактор, автор')]
+    results=[('Ссылка на статью','Заголовок','Редактор, автор')]
 
     pattern = r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
 
@@ -86,7 +83,7 @@ def download(session):
         return
     soup = BeautifulSoup(response.text,'lxml')
 
-    table = soup.find('table',class_ = 'docutils')
+    table = soup.find('table',class_ ='docutils')
 
     pdf = table.find('a', {'href':re.compile(r'.+pdf-a4\.zip$')})
     link = urljoin(d_url,pdf['href'])
