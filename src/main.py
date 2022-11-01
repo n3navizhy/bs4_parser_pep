@@ -125,7 +125,7 @@ def pep(session):
     if response is None:
         return
     soup = BeautifulSoup(response.text, 'lxml')
-    section = soup.find('section',id = 'index-by-category')
+    section = soup.find('section',id='index-by-category')
     section = section.find_all('section')
 
     for sec in tqdm(section):
@@ -137,16 +137,14 @@ def pep(session):
                 t = pep.find('td')
                 if t is not None:
                     t_status = t.text[1:]
-                if pep.find('a',class_='pep reference internal') is not None:
-                    number = pep.find('a',class_='pep reference internal').text
-                if pep.find('a',class_='pep reference internal') is not None:
-                    link = pep.find('a',class_='pep reference internal')['href']
+                if pep.find('a', class_='pep reference internal') is not None:
+                    link = pep.find('a', class_='pep reference internal')['href']
                     ab_link = 'https://peps.python.org/'+link
                     response = session.get(ab_link)
                     soup = BeautifulSoup(response.text, 'lxml')
 
                     content = soup.find(id="pep-content").find('dl')
-                    p_info =  content.find_all('dt')
+                    p_info = content.find_all('dt')
                     for dt in p_info:
                         if dt.text == "Status:":
                             p_status = dt.find_next_sibling().text
