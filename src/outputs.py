@@ -4,6 +4,7 @@ import datetime as dt
 import csv
 import logging
 
+
 def control_output(results, cli_args):
     output = cli_args.output
     if output == 'pretty':
@@ -22,6 +23,7 @@ def default_output(results):
     for row in results:
         print(*row)
 
+
 def pretty_output(results):
     # Инициализируем объект PrettyTable.
     table = PrettyTable()
@@ -34,15 +36,16 @@ def pretty_output(results):
     # Печатаем таблицу.
     print(table)
 
-def file_output(results,cli_args):
+
+def file_output(results, cli_args):
     results_dir = BaseDIR/'results'
     results_dir.mkdir(exist_ok=True)
     parser_mode = cli_args.mode
-    now =dt.datetime.now().strftime(DATETIME_FORMAT)
+    now = dt.datetime.now().strftime(DATETIME_FORMAT)
     file_name = f'{parser_mode}_{now}.csv'
     file_path = results_dir/file_name
 
-    with open(file_path,'w',encoding='utf-8') as file:
+    with open(file_path, 'w', encoding='utf-8') as file:
         writer = csv.writer(file,dialect='unix')
         writer.writerows(results)
     logging.info(f'Файл с результатами был сохранён: {file_path}')
