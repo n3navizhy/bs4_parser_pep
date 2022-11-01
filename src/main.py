@@ -6,41 +6,40 @@ from tqdm import tqdm
 import logging
 from utils import get_response
 from constants import BaseDIR, MAIN_DOC_URL
-from configs import configure_argument_parser ,configure_logging
+from configs import configure_argument_parser, configure_logging
 from outputs import control_output
 import csv
 
 
 def whats_new(session):
-    wn_url = urljoin(MAIN_DOC_URL,'whatsnew/')
+    wn_url = urljoin(MAIN_DOC_URL, 'whatsnew/')
 
     response = get_response(session, wn_url)
     if response is None:
         # Если основная страница не загрузится, программа закончит работу.
         return
-    soup = BeautifulSoup(response.text,'lxml')
+    soup = BeautifulSoup(response.text, 'lxml')
 
-    first_s=soup.find_all('div', class_='toctree-wrapper compound')
-    sec_s =first_s[0].find_all('li',class_="toctree-l2")
+    first_s = soup.find_all('div', class_='toctree-wrapper compound')
+    sec_s = first_s[0].find_all('li', class_="toctree-l2")
     results = [('Ссылка на статью', 'Заголовок', 'Редактор, автор')]
     for i in tqdm(sec_s):
         res = i.find('a')
-        version_link = urljoin(wn_url,res['href'])
+        version_link = urljoin(wn_url, res['href'])
         response = get_response(session, version_link)
         if response is None:
             return
-        soup = BeautifulSoup(response.text,'lxml')
+        soup = BeautifulSoup(response.text, 'lxml')
         h1 = soup.find('h1').text
         d1 = soup.find('dl')
-        d1_text = d1.text.replace('\n',' ')
-        results.append((res['href'],h1,d1_text))
+        d1_text = d1.text.replace('\n', ' ')
+        results.append((res['href'], h1, d1_text))
     return results
 
-def latest_versions(session):
 
-    response = get_response(session,MAIN_DOC_URL)
+def latest_versions(session):
+    response = get_response(session, MAIN_DOC_URL)
     if response is None:
-    # Если основная страница не загрузится, программа закончит работу.
         return
     soup = BeautifulSoup(response.text,'lxml')
     sidebar = soup.find('div',class_='sphinxsidebar')
@@ -56,12 +55,11 @@ def latest_versions(session):
             raise Exception('Ничего не нашлось')
 
 
-    results=[('Ссылка на статью','Заголовок','Редактор, автор')]
-
+    results= [('Ссылка на статью','Заголовок','Редактор, автор')]
     pattern = r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
 
     for a_tag in a_tags:
-        match =re.search(pattern,a_tag.text)
+        match = re.search(pattern,a_tag.text)
         link = a_tag['href']
         if match is not None:
 
@@ -70,7 +68,7 @@ def latest_versions(session):
         else:
             version = a_tag.text
             status = ""
-        results.append((link,version,status))
+        results.append((link, version, status))
 
     return results
 
