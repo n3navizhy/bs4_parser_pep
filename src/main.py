@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 import logging
 from utils import get_response
-from constants import BaseDIR, MAIN_DOC_URL
+from constants import BASE_DIR, MAIN_DOC_URL, PEP_link
 from configs import configure_argument_parser, configure_logging
 from outputs import control_output
 import csv
@@ -74,7 +74,7 @@ def latest_versions(session):
 
 def download(session):
     d_url = urljoin(MAIN_DOC_URL, 'download.html')
-    downloadDIR = BaseDIR/'downloads'
+    downloadDIR = BASE_DIR/'downloads'
     response = get_response(session, d_url)
     if response is None:
         return
@@ -138,7 +138,7 @@ def pep(session):
                 if pep.find('a', class_='pep reference internal') is not None:
                     link = pep.find('a', class_='pep reference internal')
                     link = link['href']
-                    ab_link = 'https://peps.python.org/'+link
+                    ab_link = PEP_link\link
                     response = session.get(ab_link)
                     soup = BeautifulSoup(response.text, 'lxml')
 
@@ -155,7 +155,7 @@ def pep(session):
                         Статус в карточке: {p_status}
                         Ожидаемые статусы: {EXPECTED_STATUS[t_status]}''')
 
-    file_path = BaseDIR/'results'/'pep_result.csv'
+    file_path = BASE_DIR/'results'/'pep_result.csv'
     with open(file_path, 'w', encoding='utf-8') as file:
         w = csv.DictWriter(file, counter.keys())
         w.writeheader()

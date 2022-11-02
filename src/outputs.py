@@ -1,5 +1,5 @@
 from prettytable import PrettyTable
-from constants import BaseDIR, DATETIME_FORMAT
+from constants import BASE_DIR, DATETIME_FORMAT
 import datetime as dt
 import csv
 import logging
@@ -38,7 +38,7 @@ def pretty_output(results):
 
 
 def file_output(results, cli_args):
-    results_dir = BaseDIR/'results'
+    results_dir = BASE_DIR/'results'
     results_dir.mkdir(exist_ok=True)
     parser_mode = cli_args.mode
     now = dt.datetime.now().strftime(DATETIME_FORMAT)
