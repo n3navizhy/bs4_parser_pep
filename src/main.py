@@ -138,7 +138,7 @@ def pep(session):
                 if pep.find('a', class_='pep reference internal') is not None:
                     link = pep.find('a', class_='pep reference internal')
                     link = link['href']
-                    ab_link = urljoin(PEP_link,link)
+                    ab_link = urljoin(PEP_link, link)
                     response = session.get(ab_link)
                     soup = BeautifulSoup(response.text, 'lxml')
 
