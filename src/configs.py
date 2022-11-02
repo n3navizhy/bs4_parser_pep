@@ -1,7 +1,7 @@
 
 
 import argparse
-from constants import BaseDIR
+from constants import BASE_DIR
 import logging
 from logging.handlers import RotatingFileHandler
 
