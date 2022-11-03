@@ -130,7 +130,7 @@ def pep(session):
                 response = get_response(response, ab_link)
                 soup = BeautifulSoup(response.text, 'lxml')
 
-                content = find_tag(soup, attr={'id': "pep-content"}, 'dl')
+                content = find_tag(soup, 'dl', attr={'id': "pep-content"})
                 content = find_tag(content, 'dl')
                 p_info = content.find_all('dt')
                 for dt in p_info:
