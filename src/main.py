@@ -123,7 +123,8 @@ def pep(session):
         for pep in pep_list:
             t = find_tag(pep, 'td')
             t_status = t.text[1:]
-            link = find_tag(pep, 'a', attrs={'class': 'pep reference internal'})
+            tag_name = 'pep reference internal'
+            link = find_tag(pep, 'a', attrs={'class': tag_name})
             if link is not None:
                 link = link['href']
                 ab_link = urljoin(PEP_link, link)
