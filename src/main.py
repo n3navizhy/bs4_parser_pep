@@ -22,7 +22,7 @@ def whats_new(session):
 
     first_s = soup.find_all('div', class_='toctree-wrapper compound')
     sec_s = first_s[0].find_all('li', class_="toctree-l2")
-    results = [('Ссылка на статью', 'Заголовок', 'Редактор, Автор'),]
+    results = [('Ссылка на статью', 'Заголовок', 'Редактор, Автор'), ]
     for i in tqdm(sec_s):
         res = find_tag(i, 'a')
         version_link = urljoin(wn_url, res['href'])
@@ -80,7 +80,7 @@ def download(session):
         return
     soup = BeautifulSoup(response.text, 'lxml')
 
-    table = find_tag(soup, 'table', attrs={'class':'docutils'})
+    table = find_tag(soup, 'table', attrs={'class': 'docutils'})
 
     pdf = find_tag(table, 'a', {'href': re.compile(r'.+pdf-a4\.zip$')})
     link = urljoin(d_url, pdf['href'])
@@ -123,14 +123,15 @@ def pep(session):
         for pep in pep_list:
             t = find_tag(pep, 'td')
             t_status = t.text[1:]
-            link = find_tag(pep, 'a', attrs={'class':'pep reference internal'})
+            link = find_tag(pep, 'a', attrs={'class': 'pep reference internal'})
             if link is not None:
                 link = link['href']
                 ab_link = urljoin(PEP_link, link)
                 response = get_response(response, ab_link)
                 soup = BeautifulSoup(response.text, 'lxml')
 
-                content = find_tag(find_tag(soup, attr={'id':"pep-content"}), 'dl')
+                content = find_tag(soup, attr={'id': "pep-content"}), 'dl')
+                content = find_tag(content, 'dl')
                 p_info = content.find_all('dt')
                 for dt in p_info:
                     if dt.text == "Status:":
