@@ -2,11 +2,10 @@ import logging
 import requests_cache
 import re
 import csv
-import collections
 
-from bs4 import BeautifulSoup
 from tqdm import tqdm
 from urllib.parse import urljoin
+from exceptions import ParserFindTagException, ParserResopnseExceprion
 
 from utils import get_soup, find_tag, get_response
 from constants import BASE_DIR, MAIN_DOC_URL, PEP_link, EXPECTED_STATUS
@@ -82,7 +81,6 @@ def download(session):
     response = session.get(link)
     with open(archive_path, 'wb') as file:
         file.write(response.content)
-    #print(archive_path)
     logging.info(logging_messages['archive'].format(path=archive_path))
 
 
@@ -108,12 +106,13 @@ def pep(session):
         if table is not None:
             pep_list = table.find_all('tr')
             for pep in pep_list[1:]:
-                tag = find_tag(pep,'td')
+                tag = find_tag(pep, 'td')
                 tag_status = tag.text[1:]
-                link = find_tag(tag.find_next_sibling(),'a')['href']
+                link = find_tag(tag.find_next_sibling(), 'a')['href']
                 ab_link = urljoin(PEP_link, link)
                 soup = get_soup(get_response(session, ab_link))
-                content = find_tag(soup, 'section', attrs={'id': "pep-content"})
+                content = find_tag(soup, 'section',
+                                                   attrs={'id': "pep-content"})
                 if content is not None:
                     content = content.find('dl')
                     p_info = content.find_all('dt')
@@ -127,8 +126,6 @@ def pep(session):
                         logging.info(f'Несовпадающие статусы: {link}')
                         logging.info(f'Статус в карточке: {p_status}')
                         logging.info(f'Ожидаемые статусы:{EXPECTED_STATUS[tag_status]}')
-
-
     with open(FILE_PATH, 'w', encoding='utf-8') as file:
         writer = csv.DictWriter(file, counter.keys())
         writer.writeheader()

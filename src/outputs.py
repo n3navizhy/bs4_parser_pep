@@ -45,5 +45,6 @@ OUTPUT = {
     'file': file_output,
 }
 
+
 def control_output(results, cli_args=None):
     OUTPUT.get(cli_args.output, default_output)(results, cli_args)
