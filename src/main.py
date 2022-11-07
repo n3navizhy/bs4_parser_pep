@@ -14,8 +14,10 @@ from configs import configure_argument_parser, configure_logging
 from outputs import control_output
 
 logging_messages = {
-    'archive': 'Архив был загружен и сохранён:{path}',
-    'file': 'Файл с результатами был сохранён: {path}',
+'archive': 'Архив был загружен и сохранён:{path}',
+'file': 'Файл с результатами был сохранён: {path}',
+'pep': 'Несовпадающие статусы: {link} \nСтатус в карточке: {p_status}\n' \
+'Ожидаемые статусы:{tag_status}'
 }
 
 
@@ -113,19 +115,19 @@ def pep(session):
                 soup = get_soup(get_response(session, ab_link))
                 content = find_tag(soup, 'section',
                                                    attrs={'id': "pep-content"})
-                if content is not None:
-                    content = content.find('dl')
-                    p_info = content.find_all('dt')
-                    for dt in p_info:
-                        if dt.text == "Status:":
-                            p_status = dt.find_next_sibling().text
-                            break
-                    if p_status in EXPECTED_STATUS[tag_status]:
-                        counter[tag_status] += 1
-                    else:
-                        logging.info(f'Несовпадающие статусы: {link}')
-                        logging.info(f'Статус в карточке: {p_status}')
-                        logging.info(f'Ожидаемые статусы:{EXPECTED_STATUS[tag_status]}')
+
+                content = content.find('dl')
+                p_info = content.find_all('dt')
+                for dt in p_info:
+                    if dt.text == "Status:":
+                        p_status = dt.find_next_sibling().text
+                        break
+                if p_status in EXPECTED_STATUS[tag_status]:
+                    counter[tag_status] += 1
+                else:
+                    logging.info(logging_messages['pep'].format(link=link,
+                    p_status=p_status, tag_status = EXPECTED_STATUS[tag_status]
+                    ))
     with open(FILE_PATH, 'w', encoding='utf-8') as file:
         writer = csv.DictWriter(file, counter.keys())
         writer.writeheader()
@@ -159,7 +161,7 @@ def main():
         logging.info('Парсер завершил работу.')
     except ParserResopnseExceprion:
         logging.info('Возникла ошибка при загрузке страницы.')
-    except  ParserFindTagException:
+    except ParserFindTagException:
         logging.info('Не найден тег')
 
 
