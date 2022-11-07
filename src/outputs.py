@@ -1,30 +1,19 @@
-from prettytable import PrettyTable
-from constants import BASE_DIR, DATETIME_FORMAT
 import datetime as dt
 import csv
 import logging
 
+from prettytable import PrettyTable
 
-def control_output(results, cli_args):
-    output = cli_args.output
-    if output == 'pretty':
-        # Вывод в формате PrettyTable.
-        pretty_output(results)
-    elif output == 'file':
-        file_output(results, cli_args)
-
-    else:
-        # Вывод по умолчанию.
-        default_output(results)
+from constants import BASE_DIR, DATETIME_FORMAT, RESULT_DIR
 
 
-def default_output(results):
+def default_output(results, cli_args=None):
     # Печатаем список results построчно.
     for row in results:
         print(*row)
 
 
-def pretty_output(results):
+def pretty_output(results, cli_args=None):
     # Инициализируем объект PrettyTable.
     table = PrettyTable()
     # В качестве заголовков устанавливаем первый элемент списка.
@@ -38,14 +27,22 @@ def pretty_output(results):
 
 
 def file_output(results, cli_args):
-    results_dir = BASE_DIR/'results'
-    results_dir.mkdir(exist_ok=True)
+    RESULT_DIR.mkdir(exist_ok=True)
     parser_mode = cli_args.mode
     now = dt.datetime.now().strftime(DATETIME_FORMAT)
     file_name = f'{parser_mode}_{now}.csv'
-    file_path = results_dir/file_name
+    file_path = RESULT_DIR/file_name
 
     with open(file_path, 'w', encoding='utf-8') as file:
         writer = csv.writer(file, dialect='unix')
         writer.writerows(results)
     logging.info(f'Файл с результатами был сохранён: {file_path}')
+
+
+OUTPUT = {
+    'pretty': pretty_output,
+    'file': file_output,
+}
+
+def control_output(results, cli_args=None):
+    OUTPUT.get(cli_args.output, default_output)(results, cli_args)

@@ -1,53 +1,45 @@
-from urllib.parse import urljoin
+import logging
 import requests_cache
 import re
+import csv
+import collections
+
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-import logging
-from utils import get_response, find_tag
+from urllib.parse import urljoin
+
+from utils import get_soup, find_tag, get_response
 from constants import BASE_DIR, MAIN_DOC_URL, PEP_link, EXPECTED_STATUS
+from constants import FILE_PATH, D_URL, PEPS_URL, WN_URL
 from configs import configure_argument_parser, configure_logging
 from outputs import control_output
-import csv
+
 
 
 def whats_new(session):
-    wn_url = urljoin(MAIN_DOC_URL, 'whatsnew/')
-
-    response = get_response(session, wn_url)
-    if response is None:
-        # Если основная страница не загрузится, программа закончит работу.
-        return
-    soup = BeautifulSoup(response.text, 'lxml')
-
-    first_s = soup.find_all('div', class_='toctree-wrapper compound')
-    sec_s = first_s[0].find_all('li', class_="toctree-l2")
+    response = get_response(session, WN_URL)
+    soup = get_soup(response)
+    div_list = soup.find_all('div', class_='toctree-wrapper compound')
+    li_list = div_list[0].find_all('li', class_="toctree-l2")
     results = [('Ссылка на статью', 'Заголовок', 'Редактор, Автор'), ]
-    for i in tqdm(sec_s):
-        res = find_tag(i, 'a')
-        version_link = urljoin(wn_url, res['href'])
+    for li in tqdm(li_list):
+        li_tag = find_tag(li, 'a')
+        version_link = urljoin(WN_URL, li_tag['href'])
         response = get_response(session, version_link)
-        if response is None:
-            return
-        soup = BeautifulSoup(response.text, 'lxml')
+        soup = get_soup(response)
         h1 = soup.find('h1').text
         d1 = soup.find('dl')
         d1_text = d1.text.replace('\n', ' ')
-        results.append((res['href'], h1, d1_text))
+        results.append((li_tag['href'], h1, d1_text))
     return results
 
 
 def latest_versions(session):
-    response = get_response(session, MAIN_DOC_URL)
-    if response is None:
-        return
-    soup = BeautifulSoup(response.text, 'lxml')
-    sidebar = find_tag(soup, 'div', class_='sphinxsidebar')
-
+    soup = get_soup(get_response(session, MAIN_DOC_URL))
+    sidebar = find_tag(soup, 'div', attrs={'class': 'sphinxsidebar'})
     ui_tags = sidebar.find_all('ul')
 
     for ul in ui_tags:
-
         if "All versions" in ul.text:
             a_tags = ul.find_all('a')
             break
@@ -73,23 +65,16 @@ def latest_versions(session):
 
 
 def download(session):
-    d_url = urljoin(MAIN_DOC_URL, 'download.html')
-    downloadDIR = BASE_DIR/'downloads'
-    response = get_response(session, d_url)
-    if response is None:
-        return
-    soup = BeautifulSoup(response.text, 'lxml')
-
+    DOWNLOAD_DIR = BASE_DIR/'downloads'
+    response = get_response(session, D_URL)
+    soup = get_soup(response)
     table = find_tag(soup, 'table', attrs={'class': 'docutils'})
-
     pdf = find_tag(table, 'a', {'href': re.compile(r'.+pdf-a4\.zip$')})
-    link = urljoin(d_url, pdf['href'])
+    link = urljoin(D_URL, pdf['href'])
     file_name = link.split('/')[-1]
-    downloadDIR.mkdir(exist_ok=True)
-    archive_path = downloadDIR/file_name
-
+    DOWNLOAD_DIR.mkdir(exist_ok=True)
+    archive_path = DOWNLOAD_DIR/file_name
     response = session.get(link)
-
     with open(archive_path, 'wb') as file:
         file.write(response.content)
     print(archive_path)
@@ -108,50 +93,44 @@ def pep(session):
         'W': 0,
         '': 0,
         }
-    peps_url = "https://peps.python.org/"
-    response = get_response(session, peps_url)
-    if response is None:
-        return
-    soup = BeautifulSoup(response.text, 'lxml')
+
+    soup = get_soup(get_response(session, PEPS_URL))
     section = soup.find('section', id='index-by-category')
     section = section.find_all('section')
 
     for sec in tqdm(section):
-
         table = find_tag(sec, 'table')
-        pep_list = table.find_all('tr')
-        for pep in pep_list:
-            t = find_tag(pep, 'td')
-            t_status = t.text[1:]
-            tag_name = 'pep reference internal'
-            link = find_tag(pep, 'a', attrs={'class': tag_name})
-            if link is not None:
-                link = link['href']
+        if table is not None:
+            pep_list = table.find_all('tr')
+            for pep in pep_list[1:]:
+                tag = find_tag(pep,'td')
+                tag_status = tag.text[1:]
+                link = find_tag(tag.find_next_sibling(),'a')['href']
                 ab_link = urljoin(PEP_link, link)
-                response = get_response(response, ab_link)
-                soup = BeautifulSoup(response.text, 'lxml')
+                soup = get_soup(get_response(session, ab_link))
+                content = find_tag(soup, 'section', attrs={'id': "pep-content"})
+                if content is not None:
+                    content = content.find('dl')
+                    p_info = content.find_all('dt')
+                    for dt in p_info:
+                        if dt.text == "Status:":
+                            p_status = dt.find_next_sibling().text
+                            break
+                    if p_status in EXPECTED_STATUS[tag_status]:
+                        counter[tag_status] += 1
+                    else:
+                        logging.info(f'Несовпадающие статусы: {link}')
+                        logging.info(f'Статус в карточке: {p_status}')
+                        logging.info(f'Ожидаемые статусы: {EXPECTED_STATUS[tag_status]}')
 
-                content = find_tag(soup, 'dl', attr={'id': "pep-content"})
-                content = find_tag(content, 'dl')
-                p_info = content.find_all('dt')
-                for dt in p_info:
-                    if dt.text == "Status:":
-                        p_status = dt.find_next_sibling().text
-                        break
-                if p_status in EXPECTED_STATUS[t_status]:
-                    counter[t_status] += 1
-                else:
-                    logging.info(f'''Несовпадающие статусы: {link}
-                    Статус в карточке: {p_status}
-                    Ожидаемые статусы: {EXPECTED_STATUS[t_status]}''')
 
-    file_path = BASE_DIR/'results'/'pep_result.csv'
-    with open(file_path, 'w', encoding='utf-8') as file:
-        w = csv.DictWriter(file, counter.keys())
-        w.writeheader()
-        w.writerow(counter)
-
-    logging.info(f'Файл с результатами был сохранён: {file_path}')
+    with open(FILE_PATH, 'w', encoding='utf-8') as file:
+        writer = csv.DictWriter(file, counter.keys())
+        writer.writeheader()
+        writer.writerow(counter)
+        writer = csv.writer(file,delimiter=' ')
+        writer.writerow(["Total: "+str(sum(counter.values()))])
+    logging.info(f'Файл с результатами был сохранён: {FILE_PATH}')
 
 
 MODE_TO_FUNCTION = {
