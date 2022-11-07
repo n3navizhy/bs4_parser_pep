@@ -17,7 +17,7 @@ logging_messages = {
     'archive': 'Архив был загружен и сохранён:{path}',
     'file': 'Файл с результатами был сохранён: {path}',
     'pep': 'Несовпадающие статусы: {link} \nСтатус в карточке: {p_status} '
-           '\nОжидаемые статусы:{tag_status} '
+           '\nОжидаемые статусы:{status} '
 }
 
 
@@ -109,8 +109,8 @@ def pep(session):
             pep_list = table.find_all('tr')
             for pep in pep_list[1:]:
                 tag = find_tag(pep, 'td')
-                tag_status = tag.text[1:]
                 link = find_tag(tag.find_next_sibling(), 'a')['href']
+                tag = tag.text[1:]
                 ab_link = urljoin(PEP_link, link)
                 soup = get_soup(get_response(session, ab_link))
                 content = find_tag(soup, 'section',
@@ -122,13 +122,12 @@ def pep(session):
                     if dt.text == "Status:":
                         p_status = dt.find_next_sibling().text
                         break
-                if p_status in EXPECTED_STATUS[tag_status]:
-                    counter[tag_status] += 1
+                if p_status in EXPECTED_STATUS[tag]:
+                    counter[tag] += 1
                 else:
                     message = logging_messages['pep']
                     logging.info(message.format(link=link, p_status=p_status,
-                                                tag_status=
-                                                EXPECTED_STATUS[tag_status]))
+                                                status=EXPECTED_STATUS[tag]))
     with open(FILE_PATH, 'w', encoding='utf-8') as file:
         writer = csv.DictWriter(file, counter.keys())
         writer.writeheader()
