@@ -3,7 +3,6 @@ from urllib.parse import urljoin
 MAIN_DOC_URL = 'https://docs.python.org/3/'
 BASE_DIR = Path(__file__).parent
 FILE_PATH = BASE_DIR/'results'/'pep_result.csv'
-RESULT_DIR = BASE_DIR/'results'
 D_URL = urljoin(MAIN_DOC_URL, 'download.html')
 WN_URL = urljoin(MAIN_DOC_URL, 'whatsnew/')
 CHOICES=('pretty', 'file')

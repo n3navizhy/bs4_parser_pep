@@ -14,6 +14,10 @@ from constants import FILE_PATH, D_URL, PEPS_URL, WN_URL
 from configs import configure_argument_parser, configure_logging
 from outputs import control_output
 
+logging_messages = {
+    'archive': 'Архив был загружен и сохранён:{path}',
+    'file': 'Файл с результатами был сохранён: {path}',
+}
 
 
 def whats_new(session):
@@ -44,7 +48,8 @@ def latest_versions(session):
             a_tags = ul.find_all('a')
             break
         else:
-            raise Exception('Ничего не нашлось')
+            error_message = 'Ничего не нашлось'
+            raise ParserFindTagException(error_message)
 
     results = [('Ссылка на статью', 'Заголовок', 'Редактор, автор')]
     pattern = r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
@@ -77,8 +82,8 @@ def download(session):
     response = session.get(link)
     with open(archive_path, 'wb') as file:
         file.write(response.content)
-    print(archive_path)
-    logging.info(f'Архив был загружен и сохранён: {archive_path}')
+    #print(archive_path)
+    logging.info(logging_messages['archive'].format(path=archive_path))
 
 
 def pep(session):
@@ -98,8 +103,8 @@ def pep(session):
     section = soup.find('section', id='index-by-category')
     section = section.find_all('section')
 
-    for sec in tqdm(section):
-        table = find_tag(sec, 'table')
+    for sec in section:
+        table = sec.find('table')
         if table is not None:
             pep_list = table.find_all('tr')
             for pep in pep_list[1:]:
@@ -121,16 +126,16 @@ def pep(session):
                     else:
                         logging.info(f'Несовпадающие статусы: {link}')
                         logging.info(f'Статус в карточке: {p_status}')
-                        logging.info(f'Ожидаемые статусы: {EXPECTED_STATUS[tag_status]}')
+                        logging.info(f'Ожидаемые статусы:{EXPECTED_STATUS[tag_status]}')
 
 
     with open(FILE_PATH, 'w', encoding='utf-8') as file:
         writer = csv.DictWriter(file, counter.keys())
         writer.writeheader()
         writer.writerow(counter)
-        writer = csv.writer(file,delimiter=' ')
+        writer = csv.writer(file, delimiter=' ')
         writer.writerow(["Total: "+str(sum(counter.values()))])
-    logging.info(f'Файл с результатами был сохранён: {FILE_PATH}')
+    logging.info(logging_messages['file'].format(path=FILE_PATH))
 
 
 MODE_TO_FUNCTION = {
@@ -142,18 +147,23 @@ MODE_TO_FUNCTION = {
 
 
 def main():
-    configure_logging()
-    logging.info("Rabotaet")
-    arg_parser = configure_argument_parser(MODE_TO_FUNCTION.keys())
-    args = arg_parser.parse_args()
-    session = requests_cache.CachedSession()
-    if args.clear_cache:
-        session.cache.clear()
-    parser_mode = args.mode
-    results = MODE_TO_FUNCTION[parser_mode](session)
-    if results is not None:
-        control_output(results, args)
-    logging.info('Парсер завершил работу.')
+    try:
+        configure_logging()
+        logging.info("Rabotaet")
+        arg_parser = configure_argument_parser(MODE_TO_FUNCTION.keys())
+        args = arg_parser.parse_args()
+        session = requests_cache.CachedSession()
+        if args.clear_cache:
+            session.cache.clear()
+        parser_mode = args.mode
+        results = MODE_TO_FUNCTION[parser_mode](session)
+        if results is not None:
+            control_output(results, args)
+        logging.info('Парсер завершил работу.')
+    except ParserResopnseExceprion:
+        logging.info('Возникла ошибка при загрузке страницы.')
+    except  ParserFindTagException:
+        logging.info('Не найден тег')
 
 
 if __name__ == '__main__':
