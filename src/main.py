@@ -16,7 +16,8 @@ from outputs import control_output
 logging_messages = {
     'archive': 'Архив был загружен и сохранён:{path}',
     'file': 'Файл с результатами был сохранён: {path}',
-    'pep': 'Несовпадающие статусы: {link} \nСтатус в карточке: {p_status} \nОжидаемые статусы:{tag_status}'
+    'pep': 'Несовпадающие статусы: {link} \nСтатус в карточке: {p_status} '
+           '\nОжидаемые статусы:{tag_status} '
 }
 
 
@@ -70,7 +71,7 @@ def latest_versions(session):
 
 
 def download(session):
-    DOWNLOAD_DIR = BASE_DIR/'downloads'
+    DOWNLOAD_DIR = BASE_DIR / 'downloads'
     response = get_response(session, D_URL)
     soup = get_soup(response)
     table = find_tag(soup, 'table', attrs={'class': 'docutils'})
@@ -78,7 +79,7 @@ def download(session):
     link = urljoin(D_URL, pdf['href'])
     file_name = link.split('/')[-1]
     DOWNLOAD_DIR.mkdir(exist_ok=True)
-    archive_path = DOWNLOAD_DIR/file_name
+    archive_path = DOWNLOAD_DIR / file_name
     response = session.get(link)
     with open(archive_path, 'wb') as file:
         file.write(response.content)
@@ -96,7 +97,7 @@ def pep(session):
         'S': 0,
         'W': 0,
         '': 0,
-        }
+    }
 
     soup = get_soup(get_response(session, PEPS_URL))
     section = soup.find('section', id='index-by-category')
@@ -112,7 +113,8 @@ def pep(session):
                 link = find_tag(tag.find_next_sibling(), 'a')['href']
                 ab_link = urljoin(PEP_link, link)
                 soup = get_soup(get_response(session, ab_link))
-                content = find_tag(soup, 'section', attrs={'id': "pep-content"})
+                content = find_tag(soup, 'section',
+                                   attrs={'id': "pep-content"})
 
                 content = content.find('dl')
                 p_info = content.find_all('dt')
@@ -123,14 +125,16 @@ def pep(session):
                 if p_status in EXPECTED_STATUS[tag_status]:
                     counter[tag_status] += 1
                 else:
-                    logging.info(logging_messages['pep'].format(link=link, p_status=p_status,
-                                                                tag_status=EXPECTED_STATUS[tag_status]))
+                    message = logging_messages['pep']
+                    logging.info(message.format(link=link, p_status=p_status,
+                                                tag_status=
+                                                EXPECTED_STATUS[tag_status]))
     with open(FILE_PATH, 'w', encoding='utf-8') as file:
         writer = csv.DictWriter(file, counter.keys())
         writer.writeheader()
         writer.writerow(counter)
         writer = csv.writer(file, delimiter=' ')
-        writer.writerow(["Total: "+str(sum(counter.values()))])
+        writer.writerow(["Total: " + str(sum(counter.values()))])
     logging.info(logging_messages['file'].format(path=FILE_PATH))
 
 
