@@ -14,10 +14,10 @@ from configs import configure_argument_parser, configure_logging
 from outputs import control_output
 
 logging_messages = {
-'archive': 'Архив был загружен и сохранён:{path}',
-'file': 'Файл с результатами был сохранён: {path}',
-'pep': 'Несовпадающие статусы: {link} \nСтатус в карточке: {p_status}\n' \
-'Ожидаемые статусы:{tag_status}'
+    'archive': 'Архив был загружен и сохранён:{path}',
+    'file': 'Файл с результатами был сохранён: {path}',
+    'pep': 'Несовпадающие статусы: {link} \nСтатус в карточке: {p_status}\n' \
+    'Ожидаемые статусы:{tag_status}'
 }
 
 
@@ -125,9 +125,8 @@ def pep(session):
                 if p_status in EXPECTED_STATUS[tag_status]:
                     counter[tag_status] += 1
                 else:
-                    logging.info(logging_messages['pep'].format(link=link,
-                    p_status=p_status, tag_status = EXPECTED_STATUS[tag_status]
-                    ))
+                    logging.info(logging_messages['pep'].format(link = link,
+                p_status = p_status, tag_status = EXPECTED_STATUS[tag_status]))
     with open(FILE_PATH, 'w', encoding='utf-8') as file:
         writer = csv.DictWriter(file, counter.keys())
         writer.writeheader()
