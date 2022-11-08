@@ -4,7 +4,8 @@ import re
 import requests_cache
 
 
-from exceptions import ParserFindTagException
+from exceptions import ParserFindTagException, ParserResopnseExceprion
+from requests import RequestException
 from tqdm import tqdm
 from urllib.parse import urljoin
 
@@ -34,7 +35,7 @@ def whats_new(session):
         version_link = urljoin(WN_URL, li_tag['href'])
         try:
             soup = get_soup(session, version_link)
-        except:
+        except RequestException:
             LOGGING_PULL.append(LOGIING_SOUP.format(version_link))
             continue
         h1 = soup.find('h1').text
@@ -120,7 +121,7 @@ def pep(session):
             ab_link = urljoin(PEP_link, link)
             try:
                 soup = get_soup(session, ab_link)
-            except:
+            except RequestException:
                 LOGGING_PULL.append(LOGIING_SOUP.format(link=ab_link))
                 continue
             content = find_tag(soup, 'section',
@@ -137,7 +138,7 @@ def pep(session):
             else:
                 LOGGING_PULL.append(LOGIING_PEP.format(link=link,
                                                        p_status=p_status,
-                                                status=EXPECTED_STATUS[tag]))
+                                                  status=EXPECTED_STATUS[tag]))
     with open(FILE_PATH, 'w', encoding='utf-8') as file:
         writer = csv.DictWriter(file, counter.keys())
         writer.writeheader()
