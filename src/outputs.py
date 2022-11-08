@@ -6,6 +6,8 @@ from prettytable import PrettyTable
 
 from constants import BASE_DIR, DATETIME_FORMAT, PRETTY_MODE, FILE_MODE
 
+LOGGING_FILE = 'Файл с результатами был сохранён: {path}'
+
 
 def default_output(results, cli_args=None):
     # Печатаем список results построчно.
@@ -37,7 +39,7 @@ def file_output(results, cli_args):
     with open(file_path, 'w', encoding='utf-8') as file:
         writer = csv.writer(file, dialect=csv.unix_dialect)
         writer.writerows(results)
-    logging.info(f'Файл с результатами был сохранён: {file_path}')
+    logging.info(LOGGING_FILE.format(path=file_path))
 
 
 OUTPUTS = {

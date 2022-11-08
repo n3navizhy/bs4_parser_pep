@@ -16,8 +16,8 @@ from outputs import control_output
 from utils import get_soup, find_tag, logging_print
 
 
-LOGIING_ARCHIVE = 'Архив был загружен и сохранён:{path}',
-LOGIING_FILE = 'Файл с результатами был сохранён: {path}',
+LOGIING_ARCHIVE = 'Архив был загружен и сохранён:{path}'
+LOGIING_FILE = 'Файл с результатами был сохранён: {path}'
 LOGIING_PEP = 'Несовпадающие статусы: {link} \nСтатус в карточке: {p_status} '
 '\nОжидаемые статусы:{status} '
 LOGIING_SOUP = 'не удалось получить данные из {link}'
@@ -84,6 +84,7 @@ def download(session):
     file_name = link.split('/')[-1]
     DOWNLOAD_DIR.mkdir(exist_ok=True)
     archive_path = DOWNLOAD_DIR / file_name
+    print(type(archive_path))
     response = session.get(link)
     with open(archive_path, 'wb') as file:
         file.write(response.content)
@@ -141,6 +142,7 @@ def pep(session):
         writer = csv.DictWriter(file, counter.keys())
         writer.writeheader()
         writer.writerow(counter)
+        writer = csv.writer(file, delimiter=' ')
         writer.writerow(["Total: " + str(sum(counter.values()))])
     logging_print(LOGGING_PULL)
     logging.info(LOGIING_FILE.format(path=FILE_PATH))
@@ -169,7 +171,7 @@ def main():
             control_output(results, args)
         logging.info('Парсер завершил работу.')
     except Exception:
-        logging.error(Exception)
+        logging.exception('Возникла ошибка', stack_info=True)
 
 
 if __name__ == '__main__':
