@@ -3,7 +3,7 @@ import logging
 import re
 import requests_cache
 
-from exceptions import ParserFindTagException, ParserResopnseExceprion
+from exceptions import ParserFindTagException
 from requests import RequestException
 from tqdm import tqdm
 from urllib.parse import urljoin
