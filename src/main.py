@@ -3,19 +3,16 @@ import logging
 import re
 import requests_cache
 
-
 from exceptions import ParserFindTagException, ParserResopnseExceprion
 from requests import RequestException
 from tqdm import tqdm
 from urllib.parse import urljoin
-
 
 from constants import BASE_DIR, MAIN_DOC_URL, PEP_link, EXPECTED_STATUS
 from constants import FILE_PATH, D_URL, PEPS_URL, WN_URL
 from configs import configure_argument_parser, configure_logging
 from outputs import control_output
 from utils import get_soup, find_tag, logging_print
-
 
 LOGIING_ARCHIVE = 'Архив был загружен и сохранён:{path}'
 LOGIING_FILE = 'Файл с результатами был сохранён: {path}'
@@ -138,7 +135,8 @@ def pep(session):
             else:
                 LOGGING_PULL.append(LOGIING_PEP.format(link=link,
                                                        p_status=p_status,
-                                                  status=EXPECTED_STATUS[tag]))
+                                                       status=EXPECTED_STATUS[
+                                                           tag]))
     with open(FILE_PATH, 'w', encoding='utf-8') as file:
         writer = csv.DictWriter(file, counter.keys())
         writer.writeheader()
