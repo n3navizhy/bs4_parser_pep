@@ -1,46 +1,52 @@
-import logging
-import requests_cache
-import re
 import csv
+import logging
+import re
+import requests_cache
 
+
+from exceptions import ParserFindTagException
 from tqdm import tqdm
 from urllib.parse import urljoin
-from exceptions import ParserFindTagException, ParserResopnseExceprion
 
-from utils import get_soup, find_tag, get_response
+
 from constants import BASE_DIR, MAIN_DOC_URL, PEP_link, EXPECTED_STATUS
 from constants import FILE_PATH, D_URL, PEPS_URL, WN_URL
 from configs import configure_argument_parser, configure_logging
 from outputs import control_output
+from utils import get_soup, find_tag, logging_print
 
-logging_messages = {
-    'archive': 'Архив был загружен и сохранён:{path}',
-    'file': 'Файл с результатами был сохранён: {path}',
-    'pep': 'Несовпадающие статусы: {link} \nСтатус в карточке: {p_status} '
-           '\nОжидаемые статусы:{status} '
-}
+
+LOGIING_ARCHIVE = 'Архив был загружен и сохранён:{path}',
+LOGIING_FILE = 'Файл с результатами был сохранён: {path}',
+LOGIING_PEP = 'Несовпадающие статусы: {link} \nСтатус в карточке: {p_status} '
+'\nОжидаемые статусы:{status} '
+LOGIING_SOUP = 'не удалось получить данные из {link}'
 
 
 def whats_new(session):
-    response = get_response(session, WN_URL)
-    soup = get_soup(response)
+    LOGGING_PULL = []
+    soup = get_soup(session, WN_URL)
     div_list = soup.find_all('div', class_='toctree-wrapper compound')
     li_list = div_list[0].find_all('li', class_="toctree-l2")
     results = [('Ссылка на статью', 'Заголовок', 'Редактор, Автор'), ]
     for li in tqdm(li_list):
         li_tag = find_tag(li, 'a')
         version_link = urljoin(WN_URL, li_tag['href'])
-        response = get_response(session, version_link)
-        soup = get_soup(response)
+        try:
+            soup = get_soup(session, version_link)
+        except:
+            LOGGING_PULL.append(LOGIING_SOUP.format(version_link))
+            continue
         h1 = soup.find('h1').text
         d1 = soup.find('dl')
         d1_text = d1.text.replace('\n', ' ')
         results.append((li_tag['href'], h1, d1_text))
+    logging_print(LOGGING_PULL)
     return results
 
 
 def latest_versions(session):
-    soup = get_soup(get_response(session, MAIN_DOC_URL))
+    soup = get_soup(session, MAIN_DOC_URL)
     sidebar = find_tag(soup, 'div', attrs={'class': 'sphinxsidebar'})
     ui_tags = sidebar.find_all('ul')
 
@@ -59,7 +65,6 @@ def latest_versions(session):
         match = re.search(pattern, a_tag.text)
         link = a_tag['href']
         if match is not None:
-
             version = match.group(1)
             status = match.group(2)
         else:
@@ -72,8 +77,7 @@ def latest_versions(session):
 
 def download(session):
     DOWNLOAD_DIR = BASE_DIR / 'downloads'
-    response = get_response(session, D_URL)
-    soup = get_soup(response)
+    soup = get_soup(session, D_URL)
     table = find_tag(soup, 'table', attrs={'class': 'docutils'})
     pdf = find_tag(table, 'a', {'href': re.compile(r'.+pdf-a4\.zip$')})
     link = urljoin(D_URL, pdf['href'])
@@ -83,11 +87,11 @@ def download(session):
     response = session.get(link)
     with open(archive_path, 'wb') as file:
         file.write(response.content)
-    logging.info(logging_messages['archive'].format(path=archive_path))
+    logging.info(LOGIING_ARCHIVE.format(path=archive_path))
 
 
 def pep(session):
-    pep_list = []
+    LOGGING_PULL = []
     counter = {
         'A': 0,
         'D': 0,
@@ -99,42 +103,47 @@ def pep(session):
         '': 0,
     }
 
-    soup = get_soup(get_response(session, PEPS_URL))
+    soup = get_soup(session, PEPS_URL)
     section = soup.find('section', id='index-by-category')
     section = section.find_all('section')
 
-    for sec in section:
+    for sec in tqdm(section):
         table = sec.find('table')
-        if table is not None:
-            pep_list = table.find_all('tr')
-            for pep in pep_list[1:]:
-                tag = find_tag(pep, 'td')
-                link = find_tag(tag.find_next_sibling(), 'a')['href']
-                tag = tag.text[1:]
-                ab_link = urljoin(PEP_link, link)
-                soup = get_soup(get_response(session, ab_link))
-                content = find_tag(soup, 'section',
-                                   attrs={'id': "pep-content"})
+        if table is None:
+            continue
+        pep_list = table.find_all('tr')
+        for pep in pep_list[1:]:
+            tag = find_tag(pep, 'td')
+            link = find_tag(tag.find_next_sibling(), 'a')['href']
+            tag = tag.text[1:]
+            ab_link = urljoin(PEP_link, link)
+            try:
+                soup = get_soup(session, ab_link)
+            except:
+                LOGGING_PULL.append(LOGIING_SOUP.format(link=ab_link))
+                continue
+            content = find_tag(soup, 'section',
+                               attrs={'id': "pep-content"})
 
-                content = content.find('dl')
-                p_info = content.find_all('dt')
-                for dt in p_info:
-                    if dt.text == "Status:":
-                        p_status = dt.find_next_sibling().text
-                        break
-                if p_status in EXPECTED_STATUS[tag]:
-                    counter[tag] += 1
-                else:
-                    message = logging_messages['pep']
-                    logging.info(message.format(link=link, p_status=p_status,
+            content = content.find('dl')
+            p_info = content.find_all('dt')
+            for dt in p_info:
+                if dt.text == "Status:":
+                    p_status = dt.find_next_sibling().text
+                    break
+            if p_status in EXPECTED_STATUS[tag]:
+                counter[tag] += 1
+            else:
+                LOGGING_PULL.append(LOGIING_PEP.format(link=link,
+                                                       p_status=p_status,
                                                 status=EXPECTED_STATUS[tag]))
     with open(FILE_PATH, 'w', encoding='utf-8') as file:
         writer = csv.DictWriter(file, counter.keys())
         writer.writeheader()
         writer.writerow(counter)
-        writer = csv.writer(file, delimiter=' ')
         writer.writerow(["Total: " + str(sum(counter.values()))])
-    logging.info(logging_messages['file'].format(path=FILE_PATH))
+    logging_print(LOGGING_PULL)
+    logging.info(LOGIING_FILE.format(path=FILE_PATH))
 
 
 MODE_TO_FUNCTION = {
@@ -148,7 +157,7 @@ MODE_TO_FUNCTION = {
 def main():
     try:
         configure_logging()
-        logging.info("Rabotaet")
+        logging.info("Парсер начал работу")
         arg_parser = configure_argument_parser(MODE_TO_FUNCTION.keys())
         args = arg_parser.parse_args()
         session = requests_cache.CachedSession()
@@ -159,10 +168,8 @@ def main():
         if results is not None:
             control_output(results, args)
         logging.info('Парсер завершил работу.')
-    except ParserResopnseExceprion:
-        logging.info('Возникла ошибка при загрузке страницы.')
-    except ParserFindTagException:
-        logging.info('Не найден тег')
+    except Exception:
+        logging.error(Exception)
 
 
 if __name__ == '__main__':
