@@ -7,7 +7,7 @@ from requests import RequestException
 from tqdm import tqdm
 from urllib.parse import urljoin
 
-from constants import BASE_DIR, MAIN_DOC_URL, EXPECTED_STATUS, RESULT_DIR
+from constants import BASE_DIR, MAIN_DOC_URL, EXPECTED_STATUS
 from constants import DOWNLOAD_URL, PEPS_URL, WHATSNEW_URL
 from configs import configure_argument_parser, configure_logging
 from outputs import control_output
