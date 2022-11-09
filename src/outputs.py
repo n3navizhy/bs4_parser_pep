@@ -29,12 +29,12 @@ def pretty_output(results, cli_args=None):
 
 
 def file_output(results, cli_args):
-    result_dir = BASE_DIR/'results'
-    result_dir.mkdir(exist_ok=True)
+    results_dir = BASE_DIR / 'results'
+    results_dir.mkdir(exist_ok=True)
     parser_mode = cli_args.mode
     now = dt.datetime.now().strftime(DATETIME_FORMAT)
     file_name = f'{parser_mode}_{now}.csv'
-    file_path = result_dir/file_name
+    file_path = results_dir / file_name
 
     with open(file_path, 'w', encoding='utf-8') as file:
         writer = csv.writer(file, dialect=csv.unix_dialect)

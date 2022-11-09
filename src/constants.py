@@ -7,6 +7,7 @@ WHATSNEW_URL = urljoin(MAIN_DOC_URL, 'whatsnew/')
 BASE_DIR = Path(__file__).parent
 FILE_PATH = BASE_DIR/'results'/'pep_result.csv'
 DOWNLOAD_DIR = BASE_DIR/'downloads'
+RESULT_DIR = BASE_DIR / 'results'
 DATETIME_FORMAT = '%Y-%m-%d_%H-%M-%S'
 PRETTY_MODE = 'pretty'
 FILE_MODE = 'file'
