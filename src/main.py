@@ -151,7 +151,7 @@ MODE_TO_FUNCTION = {
     'pep': pep,
 }
 
-MAIN_ERROR_MESSAGE = 'Возникла ошибка: {error_message}'
+MAIN_ERROR_MESSAGE = 'Ошибка: {error_message}'
 
 
 def main():

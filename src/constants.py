@@ -8,8 +8,8 @@ BASE_DIR = Path(__file__).parent
 FILE_PATH = BASE_DIR/'results'/'pep_result.csv'
 DOWNLOAD_DIR = BASE_DIR/'downloads'
 DATETIME_FORMAT = '%Y-%m-%d_%H-%M-%S'
-PRETTY_MODE = 'pretty'
 FILE_MODE = 'file'
+PRETTY_MODE = 'pretty'
 EXPECTED_STATUS = {
     'A': ('Active', 'Accepted'),
     'D': ('Deferred',),
