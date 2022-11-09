@@ -1,4 +1,3 @@
-import csv
 import logging
 import re
 import requests_cache
@@ -9,7 +8,7 @@ from tqdm import tqdm
 from urllib.parse import urljoin
 
 from constants import BASE_DIR, MAIN_DOC_URL, EXPECTED_STATUS
-from constants import FILE_PATH, DOWNLOAD_URL, PEPS_URL, WHATSNEW_URL
+from constants import DOWNLOAD_URL, PEPS_URL, WHATSNEW_URL
 from configs import configure_argument_parser, configure_logging
 from outputs import control_output
 from utils import get_soup, find_tag, logging_print
@@ -143,6 +142,7 @@ def pep(session):
         results.append((key, value))
     results.append(("Total ", sum(counter.values())))
     return results
+
 
 MODE_TO_FUNCTION = {
     'whats-new': whats_new,
