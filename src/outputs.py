@@ -50,4 +50,4 @@ OUTPUTS = {
 
 
 def control_output(results, cli_args=None):
-    OUTPUTS.get(cli_args.output, default_output)(results, cli_args)
+    OUTPUTS.get(cli_args.output)(results, cli_args)

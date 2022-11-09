@@ -9,14 +9,14 @@ from tqdm import tqdm
 from urllib.parse import urljoin
 
 from constants import BASE_DIR, MAIN_DOC_URL, PEP_link, EXPECTED_STATUS
-from constants import FILE_PATH, D_URL, PEPS_URL, WN_URL
+from constants import FILE_PATH, DOWNLOAD_URL, PEPS_URL, WN_URL
 from configs import configure_argument_parser, configure_logging
 from outputs import control_output
 from utils import get_soup, find_tag, logging_print
 
 LOGIING_ARCHIVE = 'Архив был загружен и сохранён:{path}'
 LOGIING_FILE = 'Файл с результатами был сохранён: {path}'
-LOGIING_PEP = 'Несовпадающие статусы: {link} \nСтатус в карточке: {p_status} '
+LOGIING_PEP = 'Несовпадающие статусы: {link} \nСтатус в карточке: {p_status} '\
 '\nОжидаемые статусы:{status} '
 LOGIING_SOUP = 'не удалось получить данные из {link}'
 
@@ -24,8 +24,8 @@ LOGIING_SOUP = 'не удалось получить данные из {link}'
 def whats_new(session):
     LOGGING_PULL = []
     soup = get_soup(session, WN_URL)
-    div_list = soup.find_all('div', class_='toctree-wrapper compound')
-    li_list = div_list[0].find_all('li', class_="toctree-l2")
+    li_list = soup.select('#what-s-new-in-python div.toctree-wrapper'
+                          'li.toctree-l1')
     results = [('Ссылка на статью', 'Заголовок', 'Редактор, Автор'), ]
     for li in tqdm(li_list):
         li_tag = find_tag(li, 'a')
@@ -75,10 +75,10 @@ def latest_versions(session):
 
 def download(session):
     DOWNLOAD_DIR = BASE_DIR / 'downloads'
-    soup = get_soup(session, D_URL)
+    soup = get_soup(session, DOWNLOAD_URL)
     table = find_tag(soup, 'table', attrs={'class': 'docutils'})
     pdf = find_tag(table, 'a', {'href': re.compile(r'.+pdf-a4\.zip$')})
-    link = urljoin(D_URL, pdf['href'])
+    link = urljoin(DOWNLOAD_URL, pdf['href'])
     file_name = link.split('/')[-1]
     DOWNLOAD_DIR.mkdir(exist_ok=True)
     archive_path = DOWNLOAD_DIR / file_name
@@ -170,7 +170,7 @@ def main():
             control_output(results, args)
         logging.info('Парсер завершил работу.')
     except Exception:
-        logging.exception('Возникла ошибка', stack_info=True)
+        logging.exception('Возникла ошибка\n', Exception, stack_info=True)
 
 
 if __name__ == '__main__':
