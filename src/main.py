@@ -16,8 +16,8 @@ from utils import get_soup, find_tag, logging_print
 
 LOGIING_ARCHIVE = 'Архив был загружен и сохранён:{path}'
 LOGIING_FILE = 'Файл с результатами был сохранён: {path}'
-LOGIING_PEP = 'Несовпадающие статусы: {link} \nСтатус в карточке: {p_status} '\
-'\nОжидаемые статусы:{status} '
+LOGIING_PEP = 'Несовпадающие статусы: {link} \nСтатус в карточке: {p_status} ' \
+              '\nОжидаемые статусы:{status} '
 LOGIING_SOUP = 'не удалось получить данные из {link}'
 
 
