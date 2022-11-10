@@ -7,8 +7,8 @@ from requests import RequestException
 from tqdm import tqdm
 from urllib.parse import urljoin
 
-from constants import BASE_DIR, MAIN_DOC_URL, EXPECTED_STATUS
-from constants import DOWNLOAD_URL, PEPS_URL, WHATSNEW_URL
+from constants import BASE_DIR, MAIN_DOC_URL, WHATSNEW_URL
+from constants import DOWNLOAD_URL, PEPS_URL, EXPECTED_STATUS
 from configs import configure_argument_parser, configure_logging
 from outputs import control_output
 from utils import get_soup, find_tag, logging_print
@@ -16,7 +16,7 @@ from utils import get_soup, find_tag, logging_print
 LOGIING_ARCHIVE = 'Архив был загружен и сохранён:{path}'
 LOGIING_FILE = 'Файл с результатами был сохранён: {path}'
 LOGIING_PEP = 'Несовпадающие статусы: {link} \nСтатус в карточке: {p_status}'\
-'\nОжидаемые статусы:{status} '
+              '\nОжидаемые статусы:{status} '
 LOGIING_SOUP = 'не удалось получить данные из {link}'
 
 
@@ -101,13 +101,12 @@ def pep(session):
         '': 0,
     }
 
-
-    for sec in tqdm( get_soup(
+    for sec in tqdm(get_soup(
             session, PEPS_URL
         ).find(
             'section', id='index-by-category'
         ).find_all('section')
-    ): 
+    ):
         table = sec.find('table')
         if table is None:
             continue
