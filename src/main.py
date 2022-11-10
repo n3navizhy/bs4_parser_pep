@@ -101,11 +101,13 @@ def pep(session):
         '': 0,
     }
 
-    soup = get_soup(session, PEPS_URL)
-    section = soup.find('section', id='index-by-category')
-    sections = section.find_all('section')
 
-    for sec in tqdm(sections):
+    for sec in tqdm( get_soup(
+            session, PEPS_URL
+        ).find(
+            'section', id='index-by-category'
+        ).find_all('section')
+    ): 
         table = sec.find('table')
         if table is None:
             continue
